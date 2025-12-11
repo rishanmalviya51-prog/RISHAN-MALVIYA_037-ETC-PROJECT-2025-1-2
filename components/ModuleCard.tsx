@@ -1,7 +1,11 @@
+
 import React, { useState } from 'react';
 import { Module } from '../types';
 import AttachmentManager from './AttachmentManager';
-import { ChevronDown, CheckCircle2, Circle, Plus } from 'lucide-react';
+import { ChevronDown, CheckCircle2, Circle, Plus, Brain, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { runModuleMentor } from '../lib/gemini';
+import ModuleMentor from './ModuleMentor';
+import type { ModuleMentorData } from '../types';
 
 interface ModuleCardProps {
   module: Module;
@@ -9,6 +13,7 @@ interface ModuleCardProps {
   onAddSubtopic: (title: string) => void;
   onAddAttachment: (file: File) => void;
   onRemoveAttachment: (attId: string) => void;
+  onUpdateAnalysis?: (attId: string, analysis: string) => void;
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({ 
@@ -16,11 +21,17 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   onToggleTopic, 
   onAddSubtopic,
   onAddAttachment,
-  onRemoveAttachment 
+  onRemoveAttachment,
+  onUpdateAnalysis
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [newTopic, setNewTopic] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  // AI Mentor State
+  const [mentorData, setMentorData] = useState<ModuleMentorData | null>(null);
+  const [mentorLoading, setMentorLoading] = useState(false);
+  const [mentorError, setMentorError] = useState<string | null>(null);
 
   const completed = module.subtopics.filter(s => s.completed).length;
   const total = module.subtopics.length;
@@ -32,6 +43,39 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
       onAddSubtopic(newTopic);
       setNewTopic("");
       setIsAdding(false);
+    }
+  };
+
+  const handleAskMentor = async () => {
+    if (module.attachments.length === 0) {
+      alert("Please upload at least one file (notes, slides, or questions) for the Mentor to analyze.");
+      return;
+    }
+
+    setMentorLoading(true);
+    setMentorError(null);
+
+    try {
+      // We need to fetch the blobs for all attachments to send to Gemini
+      const filePromises = module.attachments.map(async (att) => {
+        const response = await fetch(att.objectUrl);
+        const blob = await response.blob();
+        return new File([blob], att.fileName, { type: att.mimeType });
+      });
+
+      const files = await Promise.all(filePromises);
+      const result = await runModuleMentor(
+        module.title,
+        module.subtopics.map(t => t.title),
+        files
+      );
+      
+      setMentorData(result);
+    } catch (err) {
+      console.error(err);
+      setMentorError("Failed to generate module strategy. Ensure you have valid files and try again.");
+    } finally {
+      setMentorLoading(false);
     }
   };
 
@@ -69,8 +113,56 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
       {/* Expanded Content */}
       {expanded && (
         <div className="px-5 pb-6 pt-2 border-t border-slate-800/50 animate-slide-down">
+          
+          {/* AI MENTOR SECTION */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+               <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                 <Brain size={16} className="text-indigo-400" /> 
+                 Module Intelligence
+               </h4>
+               {!mentorData ? (
+                 <button
+                  onClick={handleAskMentor}
+                  disabled={mentorLoading}
+                  className="flex items-center gap-2 text-xs px-4 py-2 rounded-full 
+                  bg-gradient-to-r from-indigo-500 via-cyan-500 to-amber-400 
+                  text-black font-bold shadow-lg hover:scale-[1.03] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {mentorLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {mentorLoading ? "Analyzing..." : "Ask Module Mentor"}
+                </button>
+               ) : (
+                 <button
+                  onClick={handleAskMentor}
+                  className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                 >
+                   <RefreshCw size={12} /> Regenerate
+                 </button>
+               )}
+            </div>
+
+            {mentorError && (
+              <div className="p-3 bg-red-900/20 border border-red-500/30 rounded-lg text-red-300 text-xs mb-4">
+                {mentorError}
+              </div>
+            )}
+
+            {!mentorData && !mentorLoading && (
+              <div className="p-6 border border-dashed border-slate-700 rounded-xl bg-slate-900/30 text-center">
+                <p className="text-sm text-slate-400 mb-2">Unlock AI-powered strategy for this module.</p>
+                <p className="text-xs text-slate-500">Upload your slides or notes below, then click "Ask Module Mentor" to generate priority lists, formulas, and a study plan.</p>
+              </div>
+            )}
+
+            {mentorData && <ModuleMentor data={mentorData} />}
+          </div>
+
+          <div className="h-px w-full bg-slate-800 mb-6"></div>
+
           {/* Subtopics */}
           <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Checklist</h4>
             {module.subtopics.map(topic => (
               <div 
                 key={topic.id}
@@ -116,6 +208,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
               attachments={module.attachments}
               onUpload={onAddAttachment}
               onDelete={onRemoveAttachment}
+              onSaveAnalysis={onUpdateAnalysis}
             />
           </div>
         </div>

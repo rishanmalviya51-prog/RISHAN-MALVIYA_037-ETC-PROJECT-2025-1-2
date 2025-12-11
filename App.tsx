@@ -25,6 +25,7 @@ const App: React.FC = () => {
     addSubtopic, 
     addAttachment, 
     removeAttachment,
+    updateAttachmentAnalysis,
     addSession,
     // Planner actions
     planner,
@@ -248,6 +249,7 @@ const App: React.FC = () => {
                     onAddSubtopic={(title) => addSubtopic(selectedCycle.id, selectedSubject.id, module.id, title)}
                     onAddAttachment={(file) => addAttachment(selectedCycle.id, selectedSubject.id, module.id, file)}
                     onRemoveAttachment={(attId) => removeAttachment(selectedCycle.id, selectedSubject.id, module.id, attId)}
+                    onUpdateAnalysis={(attId, analysis) => updateAttachmentAnalysis(selectedCycle.id, selectedSubject.id, module.id, attId, analysis)}
                   />
                 ))}
               </div>

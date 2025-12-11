@@ -1,3 +1,4 @@
+
 import { CycleData, Subject, Module } from './types';
 
 const createModule = (num: number, title: string, subtopicsList: string[] = []): Module => ({
@@ -16,11 +17,36 @@ const maths1: Subject = {
   cycle: "physics", // technically common, but placed here for structure
   credits: 4,
   modules: [
-    createModule(1, "Elements of Linear Algebra", ["Elementary transformations", "Rank of a Matrix", "Consistency of linear equations", "Gauss-Seidel method"]),
-    createModule(2, "Applied Linear Algebra & Properties", ["Eigen values and Eigen vectors", "Rayleigh’s power method", "Diagonalization", "Homogeneous linear differential equations"]),
-    createModule(3, "Differential Calculus", ["Polar coordinate system", "Curvature and radius of curvature", "Evolutes"]),
-    createModule(4, "Multivariable Derivatives", ["Partial derivatives", "Total differentiation", "Jacobians", "Taylor's & Maclaurin's series"]),
-    createModule(5, "Modular Arithmetic-1", ["GCD", "Linear Congruences", "Chinese Remainder Theorem"])
+    createModule(1, "Elements of Linear Algebra", [
+        "Rank of a Matrix (Echelon Form)", 
+        "Consistency of Linear Equations", 
+        "Gauss-Jordan Method", 
+        "Gauss-Seidel Method"
+    ]),
+    createModule(2, "Applied Linear Algebra & Properties", [
+        "Eigen Values and Eigen Vectors", 
+        "Rayleigh’s Power Method", 
+        "Diagonalization of Matrices", 
+        "Homogeneous Linear Differential Equations"
+    ]),
+    createModule(3, "Differential Calculus", [
+        "Polar Coordinate System", 
+        "Angle between Radius Vector & Tangent", 
+        "Curvature & Radius of Curvature", 
+        "Evolutes & Involutes"
+    ]),
+    createModule(4, "Multivariable Derivatives", [
+        "Partial Derivatives", 
+        "Total Differentiation", 
+        "Jacobians", 
+        "Taylor's & Maclaurin's Series"
+    ]),
+    createModule(5, "Modular Arithmetic", [
+        "Euclidean Algorithm (GCD)", 
+        "Linear Congruences", 
+        "Chinese Remainder Theorem", 
+        "Fermat's Little Theorem"
+    ])
   ]
 };
 
@@ -47,11 +73,36 @@ const electronics: Subject = {
   cycle: "physics",
   credits: 3,
   modules: [
-    createModule(1, "Semiconductor Diode", ["P-N Junction", "Rectifiers (Half/Full)", "Zener diode"]),
-    createModule(2, "Transistors", ["BJT Operation", "Biasing", "JFET", "MOSFET"]),
-    createModule(3, "Op-Amps & Oscillators", ["Inverting/Non-inverting Amplifiers", "Wein Bridge Oscillator"]),
-    createModule(4, "Communication Systems", ["Amplitude Modulation", "Frequency Modulation", "Digital Modulation (ASK, FSK)"]),
-    createModule(5, "Digital Logic", ["Number Systems", "Logic Gates", "Boolean Algebra", "Adders"])
+    createModule(1, "Semiconductor Diodes", [
+        "P-N Junction Characteristics", 
+        "Half-Wave & Full-Wave Rectifiers", 
+        "Bridge Rectifier", 
+        "Power Supply Filters & Regulators"
+    ]),
+    createModule(2, "Transistors (BJT & FET)", [
+        "BJT Construction & Operation", 
+        "BJT Biasing & Load Line", 
+        "JFET Structure & Characteristics", 
+        "Transistor as a Switch/Amplifier"
+    ]),
+    createModule(3, "Op-Amps & Oscillators", [
+        "Operational Amplifier Basics", 
+        "Inverting & Non-Inverting Amplifiers", 
+        "Wein Bridge Oscillator", 
+        "RC Phase Shift Oscillator"
+    ]),
+    createModule(4, "Communication Systems", [
+        "Block Diagram of Comm. System", 
+        "Amplitude Modulation (AM)", 
+        "Frequency Modulation (FM)", 
+        "Superheterodyne Receiver"
+    ]),
+    createModule(5, "Digital Logic", [
+        "Logic Gates (AND, OR, NOT, NAND, NOR)", 
+        "Boolean Algebra & De Morgan's Theorems", 
+        "Half Adder & Full Adder", 
+        "Number Systems"
+    ])
   ]
 };
 
@@ -62,11 +113,36 @@ const python: Subject = {
   cycle: "physics",
   credits: 4,
   modules: [
-    createModule(1, "Basics of Python", ["Variables & Data Types", "Operators", "Input/Output"]),
-    createModule(2, "Loops & Functions", ["Control statements", "Lambda functions", "Recursion"]),
-    createModule(3, "Strings & Exceptions", ["String manipulation", "Exception handling (try/except)"]),
-    createModule(4, "Data Structures", ["Lists", "Tuples", "Sets", "Dictionaries"]),
-    createModule(5, "Files & OOP", ["File handling", "Classes & Objects", "Inheritance"])
+    createModule(1, "Basics of Python", [
+        "Algorithms & Flowcharts", 
+        "Keywords, Identifiers, Variables", 
+        "Data Types & Type Conversion", 
+        "Operators & Expressions"
+    ]),
+    createModule(2, "Control Flow & Functions", [
+        "Conditional Statements (if-elif-else)", 
+        "Loops (for, while)", 
+        "Break, Continue, Pass", 
+        "Functions & Lambda Expressions"
+    ]),
+    createModule(3, "Strings & Exception Handling", [
+        "String Slicing & Operations", 
+        "String Methods", 
+        "Try, Except, Finally Blocks", 
+        "Assertions"
+    ]),
+    createModule(4, "Data Structures", [
+        "Lists & List Operations", 
+        "Tuples & Sets", 
+        "Dictionaries (Keys, Values, Methods)", 
+        "Iterating Sequences"
+    ]),
+    createModule(5, "File Handling & OOP", [
+        "Reading/Writing Files", 
+        "Classes & Objects", 
+        "Inheritance & Polymorphism", 
+        "Abstraction & Encapsulation"
+    ])
   ]
 };
 
@@ -77,11 +153,36 @@ const aiIntro: Subject = {
   cycle: "physics",
   credits: 3,
   modules: [
-    createModule(1, "Intro to AI", ["Weak vs Strong AI", "Machine Intelligence"]),
-    createModule(2, "Prompt Engineering", ["Types of Prompts", "LLM Communication"]),
-    createModule(3, "Prompt Techniques", ["Zero/Few Shot", "ChatGPT Configuration"]),
-    createModule(4, "Ethics & Trends", ["AI Bias", "AI as a Service", "AIoT"]),
-    createModule(5, "Industrial Applications", ["AI in Healthcare", "AI in Finance", "Robotics"])
+    createModule(1, "Introduction to AI", [
+        "Definition & History of AI", 
+        "Weak vs Strong AI", 
+        "Components of Intelligence", 
+        "Knowledge Representation"
+    ]),
+    createModule(2, "Prompt Engineering Basics", [
+        "Evolution of Prompts", 
+        "Types of Prompts", 
+        "Role in Communication", 
+        "Prompts for Creative Thinking"
+    ]),
+    createModule(3, "Advanced Prompt Techniques", [
+        "Instructions Prompting", 
+        "Zero-Shot & Few-Shot Prompting", 
+        "Self-Consistency", 
+        "ChatGPT Configuration"
+    ]),
+    createModule(4, "Ethics & Trends", [
+        "AI Bias & Ethical Concerns", 
+        "AI as a Service (AIaaS)", 
+        "AIoT (AI + IoT)", 
+        "Neuromorphic Computing"
+    ]),
+    createModule(5, "Industrial Applications", [
+        "AI in Healthcare & Finance", 
+        "AI in Retail & Agriculture", 
+        "Robotics & Drones", 
+        "AI in Education & Transport"
+    ])
   ]
 };
 

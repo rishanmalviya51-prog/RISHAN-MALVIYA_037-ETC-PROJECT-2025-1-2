@@ -165,6 +165,30 @@ export const useSyllabusStore = () => {
     }));
   };
 
+  const updateAttachmentAnalysis = (cycleId: string, subjectId: string, moduleId: string, attachmentId: string, analysis: string) => {
+    setData(prev => prev.map(cycle => {
+      if (cycle.id !== cycleId) return cycle;
+      return {
+        ...cycle,
+        subjects: cycle.subjects.map(subj => {
+          if (subj.id !== subjectId) return subj;
+          return {
+            ...subj,
+            modules: subj.modules.map(mod => {
+              if (mod.id !== moduleId) return mod;
+              return {
+                ...mod,
+                attachments: mod.attachments.map(att => 
+                  att.id === attachmentId ? { ...att, analysis } : att
+                )
+              };
+            })
+          };
+        })
+      };
+    }));
+  };
+
   const addSubtopic = (cycleId: string, subjectId: string, moduleId: string, title: string) => {
     setData(prev => prev.map(cycle => {
       if (cycle.id !== cycleId) return cycle;
@@ -266,6 +290,7 @@ export const useSyllabusStore = () => {
     toggleSubtopic,
     addAttachment,
     removeAttachment,
+    updateAttachmentAnalysis,
     addSubtopic,
     addSession,
     addTask,

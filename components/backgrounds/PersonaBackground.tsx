@@ -63,7 +63,7 @@ export const PersonaBackground: React.FC<PersonaBackgroundProps> = ({
         )}
       >
         {/* CSS Overrides for Neon Royal Purple Theme */}
-        <style jsx global>{`
+        <style dangerouslySetInnerHTML={{ __html: `
           /* Backgrounds - Deep Royal Purple */
           .royal-theme-wrapper {
              background: radial-gradient(circle at center, #2e1065 0%, #020617 100%);
@@ -125,7 +125,7 @@ export const PersonaBackground: React.FC<PersonaBackgroundProps> = ({
             background-color: rgba(19, 7, 46, 0.8) !important;
             border-bottom-color: rgba(217, 70, 239, 0.3) !important;
           }
-        `}</style>
+        `}} />
 
         {/* Neon Pink/Fuchsia Meteors */}
         <div className="pointer-events-none absolute inset-0 z-0">

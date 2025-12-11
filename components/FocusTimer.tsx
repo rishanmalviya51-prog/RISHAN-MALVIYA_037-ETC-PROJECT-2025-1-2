@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Square, Timer, X, CheckCircle2, Coffee } from 'lucide-react';
+import { Play, Pause, Square, Timer, X, CheckCircle2, Coffee, Zap } from 'lucide-react';
 import { Subject, StudySession } from '../types';
 
 interface FocusTimerProps {
@@ -10,19 +10,22 @@ interface FocusTimerProps {
 
 type TimerMode = "idle" | "focusing" | "break";
 
-const PRESETS = [15, 25, 45, 60];
+const PRESETS = [25, 45, 60];
 
 const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TimerMode>("idle");
+  
+  // Timer Settings
   const [duration, setDuration] = useState(25);
+  const [breakDuration, setBreakDuration] = useState(5);
+  const [includeBreaks, setIncludeBreaks] = useState(true);
+  
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
-  const [includeBreaks, setIncludeBreaks] = useState(true);
   
   const timerRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -35,7 +38,6 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) =>
     if (mode === "idle") {
       setMode("focusing");
       setTimeLeft(duration * 60);
-      startTimeRef.current = Date.now();
     }
     setIsActive(true);
     
@@ -76,7 +78,7 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) =>
       };
       onFinishSession(session);
       
-      // Play sound (optional, browser policy dependent)
+      // Play sound
       try {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audio.volume = 0.5;
@@ -85,15 +87,23 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) =>
 
       if (includeBreaks) {
         setMode("break");
-        setTimeLeft(5 * 60); // 5 min break
-        startTimer(); // Auto start break? Or wait for user. Let's wait.
-        setIsActive(false); // Let user start break manually
+        setTimeLeft(breakDuration * 60); // Use custom break duration
+        startTimer(); // Auto-start the break for flow
+        setIsActive(true); 
       } else {
         setMode("idle");
+        setIsActive(false);
       }
     } else {
       // Break finished
       setMode("idle");
+      setIsActive(false);
+      // Play sound for break end
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (e) { /* ignore */ }
     }
   };
 
@@ -103,7 +113,8 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) =>
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const progress = mode === "idle" ? 0 : 100 - (timeLeft / (mode === "break" ? 5 * 60 : duration * 60)) * 100;
+  const totalTime = mode === "idle" ? duration * 60 : (mode === "break" ? breakDuration * 60 : duration * 60);
+  const progress = mode === "idle" ? 0 : 100 - (timeLeft / totalTime) * 100;
 
   return (
     <>
@@ -168,22 +179,49 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) =>
 
               {/* Controls - Idle Mode */}
               {mode === "idle" && (
-                <div className="w-full space-y-4 animate-fade-in-up">
-                  {/* Duration Presets */}
-                  <div className="flex justify-between gap-2">
-                    {PRESETS.map(m => (
-                      <button
-                        key={m}
-                        onClick={() => setDuration(m)}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors border ${
-                          duration === m 
-                            ? 'bg-primary/10 border-primary text-primary' 
-                            : 'bg-slate-800 border-transparent text-slate-400 hover:bg-slate-700'
-                        }`}
-                      >
-                        {m}m
-                      </button>
-                    ))}
+                <div className="w-full space-y-5 animate-fade-in-up">
+                  
+                  {/* Duration Controls */}
+                  <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                         <label className="text-xs text-slate-500 uppercase font-bold flex items-center gap-2">
+                            <Zap size={12} className="text-primary" /> Session Length
+                         </label>
+                         <button 
+                             onClick={() => { setDuration(25); setBreakDuration(5); setIncludeBreaks(true); }}
+                             className="text-[10px] flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                             title="Set to 25m focus + 5m break"
+                         >
+                             🍅 Pomodoro Reset
+                         </button>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2">
+                          {PRESETS.map(m => (
+                              <button
+                                  key={m}
+                                  onClick={() => setDuration(m)}
+                                  className={`py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                      duration === m 
+                                        ? 'bg-primary/10 border-primary text-primary' 
+                                        : 'bg-slate-800 border-transparent text-slate-400 hover:bg-slate-700'
+                                  }`}
+                              >
+                                  {m}m
+                              </button>
+                          ))}
+                          <div className="relative">
+                               <input
+                                  type="number"
+                                  min="1"
+                                  max="180"
+                                  value={duration}
+                                  onChange={(e) => setDuration(Math.max(1, Math.min(180, parseInt(e.target.value) || 0)))}
+                                  className={`w-full h-full bg-slate-900 border ${!PRESETS.includes(duration) ? 'border-primary text-white' : 'border-slate-700 text-slate-400'} rounded-lg px-1 text-sm focus:outline-none focus:border-primary text-center font-mono`}
+                               />
+                               <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold pointer-events-none">min</span>
+                          </div>
+                      </div>
                   </div>
 
                   {/* Subject Selector */}
@@ -201,14 +239,33 @@ const FocusTimer: React.FC<FocusTimerProps> = ({ subjects, onFinishSession }) =>
                     </select>
                   </div>
 
-                  {/* Toggle Break */}
-                  <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/30 cursor-pointer hover:border-slate-700 transition-colors">
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeBreaks ? 'bg-primary border-primary' : 'border-slate-600'}`}>
-                      {includeBreaks && <CheckCircle2 size={14} className="text-white" />}
-                    </div>
-                    <input type="checkbox" className="hidden" checked={includeBreaks} onChange={e => setIncludeBreaks(e.target.checked)} />
-                    <span className="text-sm text-slate-400">Auto-start 5m break after focus</span>
-                  </label>
+                  {/* Break Config */}
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-900/30">
+                      <label className="flex items-center gap-3 cursor-pointer select-none">
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeBreaks ? 'bg-secondary border-secondary' : 'border-slate-600'}`}>
+                          {includeBreaks && <CheckCircle2 size={14} className="text-black" />}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={includeBreaks} onChange={e => setIncludeBreaks(e.target.checked)} />
+                        <span className="text-sm text-slate-300">Auto-start break</span>
+                      </label>
+                      
+                      {includeBreaks && (
+                           <div className="flex items-center gap-2">
+                               <span className="text-xs text-slate-500 uppercase font-bold">Duration:</span>
+                               <div className="relative w-14">
+                                   <input 
+                                      type="number"
+                                      min="1"
+                                      max="30"
+                                      value={breakDuration}
+                                      onChange={(e) => setBreakDuration(Math.max(1, Math.min(30, parseInt(e.target.value) || 0)))}
+                                      className="w-full bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-center text-xs text-white focus:border-secondary focus:outline-none"
+                                   />
+                               </div>
+                               <span className="text-xs text-slate-500">min</span>
+                           </div>
+                      )}
+                  </div>
 
                   <button 
                     onClick={startTimer}
