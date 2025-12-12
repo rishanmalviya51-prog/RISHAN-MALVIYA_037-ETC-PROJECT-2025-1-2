@@ -1,8 +1,19 @@
-
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ModuleMentorData } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// 1. Initialize the Standard Web SDK
+// We use a safe check to prevent the "Black Screen" crash if the key is missing
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+
+if (!apiKey) {
+  console.error("❌ GEMINI API KEY MISSING: Check your .env file and ensure VITE_GEMINI_API_KEY is set.");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+
+// 2. Define the Model (Use 1.5 Flash for speed/cost, or 1.5 Pro for quality)
+// Note: 'gemini-2.5-flash' does not exist yet. Using 1.5 Flash.
+const MODEL_NAME = 'gemini-1.5-flash';
 
 /**
  * Converts a File object to a Base64 string suitable for the Gemini API.
@@ -26,34 +37,29 @@ const fileToGenerativePart = async (file: File): Promise<{ inlineData: { data: s
 
 export async function analyzeStudyMaterial(file: File): Promise<string> {
   try {
+    if (!apiKey) return "Error: API Key is missing. Please check settings.";
+    
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
     const filePart = await fileToGenerativePart(file);
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: {
-        parts: [
-          filePart,
-          {
-            text: `You are an expert academic tutor. Analyze this study material (image or document). 
-            
-            Provide a structured response in the following format:
+    const prompt = `You are an expert academic tutor. Analyze this study material (image or document). 
+    
+    Provide a structured response in the following format:
 
-            ### 📝 Executive Summary
-            [A concise 2-3 sentence summary of the content]
+    ### 📝 Executive Summary
+    [A concise 2-3 sentence summary of the content]
 
-            ### 🔥 High Importance (Must Know)
-            [List 3-5 critical concepts, formulas, or definitions that are essential. Bullet points.]
+    ### 🔥 High Importance (Must Know)
+    [List 3-5 critical concepts, formulas, or definitions that are essential. Bullet points.]
 
-            ### 🧊 Lower Importance (Context/Filler)
-            [Briefly mention details that are supplementary, examples, or less critical for exams.]
+    ### 🧊 Lower Importance (Context/Filler)
+    [Briefly mention details that are supplementary, examples, or less critical for exams.]
 
-            If the image is illegible or not study material, please state that clearly.`
-          }
-        ]
-      }
-    });
+    If the image is illegible or not study material, please state that clearly.`;
 
-    return response.text || "Could not generate analysis.";
+    const result = await model.generateContent([prompt, filePart]);
+    const response = await result.response;
+    return response.text();
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
     return "Error analyzing document. Please try again.";
@@ -100,39 +106,30 @@ export async function runModuleMentor(
   attachments: File[]
 ): Promise<ModuleMentorData> {
   try {
+    if (!apiKey) throw new Error("API Key Missing");
+
+    // Initialize model with specific system instruction
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL_NAME,
+      systemInstruction: MODULE_MENTOR_SYSTEM_PROMPT,
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
     const fileParts = await Promise.all(attachments.map(fileToGenerativePart));
     
     const promptPayload = {
       task: "analyze_module",
-      module_meta: {
-        module_name: moduleName,
-      },
+      module_meta: { module_name: moduleName },
       syllabus_topics: syllabusTopics,
     };
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      config: {
-        systemInstruction: MODULE_MENTOR_SYSTEM_PROMPT,
-        responseMimeType: "application/json",
-      },
-      contents: {
-        parts: [
-          ...fileParts,
-          {
-            text: `Analyze this module based on the provided files (slides, notes, etc.) and syllabus topics.
-            
-            Module Context:
-            ${JSON.stringify(promptPayload)}
-            
-            Return ONLY valid JSON.`
-          }
-        ]
-      }
-    });
+    const prompt = `Analyze this module based on the provided files and syllabus topics.
+    Module Context: ${JSON.stringify(promptPayload)}
+    Return ONLY valid JSON.`;
 
-    const text = response.text;
-    if (!text) throw new Error("No response from AI");
+    const result = await model.generateContent([...fileParts, prompt]);
+    const response = await result.response;
+    const text = response.text();
     
     return JSON.parse(text) as ModuleMentorData;
   } catch (error) {
